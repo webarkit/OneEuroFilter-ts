@@ -1,15 +1,18 @@
 {
-  "name": "oneeurofilter-ts",
+  "name": "@webarkit/oneeurofilter-ts",
   "version": "0.1.0",
   "description": "One euro filter algorithm with typescript support",
   "main": "dist/OneEuroFilter.js",
+  "module": "dist/OneEuroFilter.mjs",
+  "types": "types/index.d.ts",
   "scripts": {
     "build-ts": "webpack --mode production",
+    "dev-ts": "webpack --mode development --progress --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https::/webarkit/oneeurofilter-ts.git"
+    "url": "https://github.com/webarkit/OneEuroFilter-ts"
   },
   "keywords": [
     "one",
