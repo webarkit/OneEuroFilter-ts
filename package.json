@@ -1,6 +1,6 @@
 {
   "name": "@webarkit/oneeurofilter-ts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "One euro filter algorithm with typescript support",
   "main": "dist/OneEuroFilter.js",
   "module": "dist/OneEuroFilter.mjs",
