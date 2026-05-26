@@ -38,13 +38,16 @@
 import packageJson from "../package.json";
 const { version } = packageJson;
 
+/** Supported typed array types for filter input/output. */
+export type FilterDataArray = Float32Array | Float64Array;
+
 
 export class OneEuroFilter {
     private minCutOff: number;
     private beta: number;
     private dCutOff: number;
-    private xPrev: Float32Array | null;
-    private dxPrev: Float32Array | null;
+    private xPrev: FilterDataArray | null;
+    private dxPrev: FilterDataArray | null;
     private tPrev: number | null;
     private initialized: boolean;
     private version: string = version;
@@ -74,18 +77,30 @@ export class OneEuroFilter {
     }
 
     /**
-     * Filters the input signal using the One Euro Filter algorithm.
-     * @param t - The timestamp of the current sample.
-     * @param x - The input signal as a Float32Array.
-     * @returns The filtered signal as a Float32Array.
+     * Creates a new typed array of the same type as the source.
+     * @param source - The source typed array to match the type of.
+     * @param lengthOrData - The length for a zero-filled array, or data to copy.
+     * @returns A new typed array of the same type as the source.
      */
-    filter(t: number, x: Float32Array): Float32Array {
+    private createTypedArray<T extends FilterDataArray>(source: T, lengthOrData: number | ArrayLike<number>): T {
+        const Ctor = source.constructor as { new (arg: number | ArrayLike<number>): T };
+        return new Ctor(lengthOrData);
+    }
+
+    /**
+     * Filters the input signal using the One Euro Filter algorithm.
+     * Accepts either Float32Array or Float64Array; the output type matches the input type.
+     * @param t - The timestamp of the current sample.
+     * @param x - The input signal as a Float32Array or Float64Array.
+     * @returns The filtered signal as the same typed array type as the input.
+     */
+    filter<T extends FilterDataArray>(t: number, x: T): T {
         if (!this.initialized) {
             this.initialized = true;
-            this.xPrev = new Float32Array(x);
-            this.dxPrev = new Float32Array(x.length);
+            this.xPrev = this.createTypedArray(x, x);
+            this.dxPrev = this.createTypedArray(x, x.length);
             this.tPrev = t;
-            return new Float32Array(x);
+            return this.createTypedArray(x, x);
         }
 
         const { xPrev, tPrev, dxPrev } = this;
@@ -94,9 +109,9 @@ export class OneEuroFilter {
 
         const ad = this.smoothingFactor(te, this.dCutOff);
 
-        const dx = new Float32Array(x.length);
-        const dxHat = new Float32Array(x.length);
-        const xHat = new Float32Array(x.length);
+        const dx = this.createTypedArray(x, x.length);
+        const dxHat = this.createTypedArray(x, x.length);
+        const xHat = this.createTypedArray(x, x.length);
         for (let i = 0; i < x.length; i++) {
             // The filtered derivative of the signal.
             dx[i] = (x[i] - xPrev![i]) / te;

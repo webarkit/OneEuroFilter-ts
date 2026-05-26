@@ -1,3 +1,5 @@
+/** Supported typed array types for filter input/output. */
+export type FilterDataArray = Float32Array | Float64Array;
 export declare class OneEuroFilter {
     private minCutOff;
     private beta;
@@ -12,9 +14,10 @@ export declare class OneEuroFilter {
     reset(): void;
     /**
      * Filters the input signal using the One Euro Filter algorithm.
+     * Accepts either Float32Array or Float64Array; the output type matches the input type.
      * @param t - The timestamp of the current sample.
-     * @param x - The input signal as a Float32Array.
-     * @returns The filtered signal as a Float32Array.
+     * @param x - The input signal as a Float32Array or Float64Array.
+     * @returns The filtered signal as the same typed array type as the input.
      */
-    filter(t: number, x: Float32Array): Float32Array;
+    filter<T extends FilterDataArray>(t: number, x: T): T;
 }

@@ -17,7 +17,7 @@ yarn add @webarkit/oneeurofilter-ts
 
 ## Usage
 
-The `filter` method accepts and returns `Float32Array` for optimal performance and memory efficiency.
+The `filter` method accepts and returns `Float32Array` or `Float64Array` for optimal performance and memory efficiency. Use `Float32Array` for most cases; use `Float64Array` when higher precision is required.
 
 In a typescript file:
 ```typescript
