@@ -43,8 +43,8 @@ export class OneEuroFilter {
     private minCutOff: number;
     private beta: number;
     private dCutOff: number;
-    private xPrev: number[] | null;
-    private dxPrev: number[] | null;
+    private xPrev: Float32Array | null;
+    private dxPrev: Float32Array | null;
     private tPrev: number | null;
     private initialized: boolean;
     private version: string = version;
@@ -73,26 +73,30 @@ export class OneEuroFilter {
         this.initialized = false;
     }
 
-    filter(t: number, x: number[]) {
+    /**
+     * Filters the input signal using the One Euro Filter algorithm.
+     * @param t - The timestamp of the current sample.
+     * @param x - The input signal as a Float32Array.
+     * @returns The filtered signal as a Float32Array.
+     */
+    filter(t: number, x: Float32Array): Float32Array {
         if (!this.initialized) {
             this.initialized = true;
-            this.xPrev = x;
-            this.dxPrev = x.map(() => 0);
+            this.xPrev = new Float32Array(x);
+            this.dxPrev = new Float32Array(x.length);
             this.tPrev = t;
-            return x;
+            return new Float32Array(x);
         }
 
         const { xPrev, tPrev, dxPrev } = this;
-
-        //console.log("filter", x, xPrev, x.map((xx, i) => x[i] - xPrev[i]));
 
         const te = t - tPrev!;
 
         const ad = this.smoothingFactor(te, this.dCutOff);
 
-        const dx: number[] = [];
-        const dxHat: number[] = [];
-        const xHat: number[] = [];
+        const dx = new Float32Array(x.length);
+        const dxHat = new Float32Array(x.length);
+        const xHat = new Float32Array(x.length);
         for (let i = 0; i < x.length; i++) {
             // The filtered derivative of the signal.
             dx[i] = (x[i] - xPrev![i]) / te;

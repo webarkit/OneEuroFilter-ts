@@ -17,6 +17,8 @@ yarn add @webarkit/oneeurofilter-ts
 
 ## Usage
 
+The `filter` method accepts and returns `Float32Array` for optimal performance and memory efficiency.
+
 In a typescript file:
 ```typescript
 // import the OneEuroFilter class into your project
@@ -29,7 +31,7 @@ const filter = new OneEuroFilter(filterMinCF, filterBeta);
 /* yourData is the data you want to filter, createData() is a dummy function here, 
 use it you method or data instead...
 */
-let yourData = createData();
+let yourData: Float32Array = createData();
 
 // filter the data (yourData) with the filter method
 filter.filter(Date.now(), yourData);
@@ -50,7 +52,7 @@ const filter = new OneEuroFilter(filterMinCF, filterBeta);
 /* yourData is the data you want to filter, createData() is a dummy function here, 
 use it you method or data instead...
 */
-let yourData = createData();
+let yourData = new Float32Array(createData());
 
 // filter the data (yourData) with the filter method
 filter.filter(Date.now(), yourData);
