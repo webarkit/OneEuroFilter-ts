@@ -24,6 +24,7 @@ export default defineConfig({
     dts({
       insertTypesEntry: true,
       outDir: 'types',
+      entryRoot: 'src',
       copyDtsFiles: true,
       include: ['src']
     })
