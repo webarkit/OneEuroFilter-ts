@@ -122,11 +122,22 @@ export class OneEuroFilter {
             return res;
         }
 
-        const { xPrev, dxPrev, dxScratch, dxHatScratch } = this;
+        // Safety check to resize persistent and scratch arrays if the input length changes dynamically
+        if (this.xPrev!.length !== x.length) {
+            const oldXPrev = this.xPrev!;
+            const oldDxPrev = this.dxPrev!;
 
-        // Safety check to resize scratch arrays if the input length changes dynamically
-        let dx = dxScratch!;
-        let dxHat = dxHatScratch!;
+            this.xPrev = this.createTypedArray(x, x.length);
+            this.dxPrev = this.createTypedArray(x, x.length);
+
+            for (let i = 0; i < x.length; i++) {
+                this.xPrev[i] = i < oldXPrev.length ? oldXPrev[i] : x[i];
+                this.dxPrev[i] = i < oldDxPrev.length ? oldDxPrev[i] : 0;
+            }
+        }
+
+        let dx = this.dxScratch!;
+        let dxHat = this.dxHatScratch!;
         if (dx.length !== x.length) {
             dx = this.createTypedArray(x, x.length);
             dxHat = this.createTypedArray(x, x.length);
@@ -134,6 +145,7 @@ export class OneEuroFilter {
             this.dxHatScratch = dxHat;
         }
 
+        const { xPrev, dxPrev } = this;
         const ad = this.smoothingFactor(te, this.dCutOff);
         const xHat = out || this.createTypedArray(x, x.length);
 
