@@ -9,6 +9,8 @@ export declare class OneEuroFilter {
     private tPrev;
     private initialized;
     private version;
+    private dxScratch;
+    private dxHatScratch;
     constructor(minCutOff: number, beta: number);
     smoothingFactor(te: number, cutoff: number): number;
     exponentialSmoothing(a: number, x: number, xPrev: number): number;
@@ -22,10 +24,11 @@ export declare class OneEuroFilter {
     private createTypedArray;
     /**
      * Filters the input signal using the One Euro Filter algorithm.
-     * Accepts either Float32Array or Float64Array; the output type matches the input type.
+     * Accepts either Float32Array or Float64Array.
      * @param t - The timestamp of the current sample.
      * @param x - The input signal as a Float32Array or Float64Array.
-     * @returns The filtered signal as the same typed array type as the input.
+     * @param out - Optional pre-allocated destination array to write the result into, achieving zero allocation.
+     * @returns The filtered signal array.
      */
-    filter<T extends FilterDataArray>(t: number, x: T): T;
+    filter<T extends FilterDataArray>(t: number, x: T, out?: T): T;
 }

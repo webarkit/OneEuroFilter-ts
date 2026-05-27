@@ -51,6 +51,11 @@ export class OneEuroFilter {
     private tPrev: number | null;
     private initialized: boolean;
     private version: string = version;
+
+    // High performance scratch buffers to avoid allocations at run-time
+    private dxScratch: FilterDataArray | null = null;
+    private dxHatScratch: FilterDataArray | null = null;
+
     constructor(minCutOff: number, beta: number) {
         this.minCutOff = minCutOff;
         this.beta = beta;
@@ -89,29 +94,49 @@ export class OneEuroFilter {
 
     /**
      * Filters the input signal using the One Euro Filter algorithm.
-     * Accepts either Float32Array or Float64Array; the output type matches the input type.
+     * Accepts either Float32Array or Float64Array.
      * @param t - The timestamp of the current sample.
      * @param x - The input signal as a Float32Array or Float64Array.
-     * @returns The filtered signal as the same typed array type as the input.
+     * @param out - Optional pre-allocated destination array to write the result into, achieving zero allocation.
+     * @returns The filtered signal array.
      */
-    filter<T extends FilterDataArray>(t: number, x: T): T {
+    filter<T extends FilterDataArray>(t: number, x: T, out?: T): T {
         if (!this.initialized) {
             this.initialized = true;
             this.xPrev = this.createTypedArray(x, x);
             this.dxPrev = this.createTypedArray(x, x.length);
+            this.dxScratch = this.createTypedArray(x, x.length);
+            this.dxHatScratch = this.createTypedArray(x, x.length);
             this.tPrev = t;
-            return this.createTypedArray(x, x);
+
+            const res = out || this.createTypedArray(x, x.length);
+            res.set(x);
+            return res;
         }
 
-        const { xPrev, tPrev, dxPrev } = this;
+        const te = t - this.tPrev!;
+        // Safeguard against zero/negative time differences
+        if (te <= 0) {
+            const res = out || this.createTypedArray(x, x.length);
+            res.set(this.xPrev!);
+            return res;
+        }
 
-        const te = t - tPrev!;
+        const { xPrev, dxPrev, dxScratch, dxHatScratch } = this;
+
+        // Safety check to resize scratch arrays if the input length changes dynamically
+        let dx = dxScratch!;
+        let dxHat = dxHatScratch!;
+        if (dx.length !== x.length) {
+            dx = this.createTypedArray(x, x.length);
+            dxHat = this.createTypedArray(x, x.length);
+            this.dxScratch = dx;
+            this.dxHatScratch = dxHat;
+        }
 
         const ad = this.smoothingFactor(te, this.dCutOff);
+        const xHat = out || this.createTypedArray(x, x.length);
 
-        const dx = this.createTypedArray(x, x.length);
-        const dxHat = this.createTypedArray(x, x.length);
-        const xHat = this.createTypedArray(x, x.length);
         for (let i = 0; i < x.length; i++) {
             // The filtered derivative of the signal.
             dx[i] = (x[i] - xPrev![i]) / te;
@@ -123,9 +148,13 @@ export class OneEuroFilter {
             xHat[i] = this.exponentialSmoothing(a, x[i], xPrev![i]);
         }
 
-        // update prev
-        this.xPrev = xHat;
-        this.dxPrev = dxHat;
+        // Store persistent state by copying instead of re-allocating
+        if (this.xPrev!.length !== xHat.length) {
+            this.xPrev = this.createTypedArray(x, xHat.length);
+            this.dxPrev = this.createTypedArray(x, xHat.length);
+        }
+        this.xPrev!.set(xHat);
+        this.dxPrev!.set(dxHat);
         this.tPrev = t;
 
         return xHat;

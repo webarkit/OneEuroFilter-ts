@@ -23,9 +23,9 @@
   "author": "Walter Perdan",
   "license": "LGPL-3.0",
   "devDependencies": {
-    "ts-loader": "9.5.2",
+    "ts-loader": "9.5.7",
     "typescript": "5.8.2",
-    "webpack": "5.98.0",
+    "webpack": "5.107.2",
     "webpack-cli": "6.0.1"
   }
 }
