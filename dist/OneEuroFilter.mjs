@@ -1,1 +1,81 @@
-var t={d:(e,r)=>{for(var i in r)t.o(r,i)&&!t.o(e,i)&&Object.defineProperty(e,i,{enumerable:!0,get:r[i]})},o:(t,e)=>Object.prototype.hasOwnProperty.call(t,e)},e={};t.d(e,{i:()=>i});const{rE:r}={rE:"0.1.2"};class i{minCutOff;beta;dCutOff;xPrev;dxPrev;tPrev;initialized;version=r;dxScratch=null;dxHatScratch=null;constructor(t,e){this.minCutOff=t,this.beta=e,this.dCutOff=.001,this.xPrev=null,this.dxPrev=null,this.tPrev=null,this.initialized=!1,console.log("OneEuroFilter: ",this.version)}smoothingFactor(t,e){const r=2*Math.PI*e*t;return r/(r+1)}exponentialSmoothing(t,e,r){return t*e+(1-t)*r}reset(){this.initialized=!1}createTypedArray(t,e){return new(0,t.constructor)(e)}filter(t,e,r){if(!this.initialized){this.initialized=!0,this.xPrev=this.createTypedArray(e,e),this.dxPrev=this.createTypedArray(e,e.length),this.dxScratch=this.createTypedArray(e,e.length),this.dxHatScratch=this.createTypedArray(e,e.length),this.tPrev=t;const i=r||this.createTypedArray(e,e.length);return i.set(e),i}const i=t-this.tPrev;if(i<=0){const t=r||this.createTypedArray(e,e.length);return t.set(this.xPrev),t}const{xPrev:h,dxPrev:s,dxScratch:n,dxHatScratch:a}=this;let c=n,o=a;c.length!==e.length&&(c=this.createTypedArray(e,e.length),o=this.createTypedArray(e,e.length),this.dxScratch=c,this.dxHatScratch=o);const l=this.smoothingFactor(i,this.dCutOff),d=r||this.createTypedArray(e,e.length);for(let t=0;t<e.length;t++){c[t]=(e[t]-h[t])/i,o[t]=this.exponentialSmoothing(l,c[t],s[t]);const r=this.minCutOff+this.beta*Math.abs(o[t]),n=this.smoothingFactor(i,r);d[t]=this.exponentialSmoothing(n,e[t],h[t])}return this.xPrev.length!==d.length&&(this.xPrev=this.createTypedArray(e,d.length),this.dxPrev=this.createTypedArray(e,d.length)),this.xPrev.set(d),this.dxPrev.set(o),this.tPrev=t,d}}var h=e.i;export{h as OneEuroFilter};
+var y = Object.defineProperty;
+var f = (n, r, t) => r in n ? y(n, r, { enumerable: !0, configurable: !0, writable: !0, value: t }) : n[r] = t;
+var s = (n, r, t) => f(n, typeof r != "symbol" ? r + "" : r, t);
+const u = "0.1.2", p = {
+  version: u
+}, { version: A } = p;
+class S {
+  constructor(r, t) {
+    s(this, "minCutOff");
+    s(this, "beta");
+    s(this, "dCutOff");
+    s(this, "xPrev");
+    s(this, "dxPrev");
+    s(this, "tPrev");
+    s(this, "initialized");
+    s(this, "version", A);
+    // High performance scratch buffers to avoid allocations at run-time
+    s(this, "dxScratch", null);
+    s(this, "dxHatScratch", null);
+    this.minCutOff = r, this.beta = t, this.dCutOff = 1e-3, this.xPrev = null, this.dxPrev = null, this.tPrev = null, this.initialized = !1, console.log("OneEuroFilter: ", this.version);
+  }
+  smoothingFactor(r, t) {
+    const h = 2 * Math.PI * t * r;
+    return h / (h + 1);
+  }
+  exponentialSmoothing(r, t, h) {
+    return r * t + (1 - r) * h;
+  }
+  reset() {
+    this.initialized = !1;
+  }
+  /**
+   * Creates a new typed array of the same type as the source.
+   * @param source - The source typed array to match the type of.
+   * @param lengthOrData - The length for a zero-filled array, or data to copy.
+   * @returns A new typed array of the same type as the source.
+   */
+  createTypedArray(r, t) {
+    const h = r.constructor;
+    return new h(t);
+  }
+  /**
+   * Filters the input signal using the One Euro Filter algorithm.
+   * Accepts either Float32Array or Float64Array.
+   * @param t - The timestamp of the current sample.
+   * @param x - The input signal as a Float32Array or Float64Array.
+   * @param out - Optional pre-allocated destination array to write the result into, achieving zero allocation.
+   * @returns The filtered signal array.
+   */
+  filter(r, t, h) {
+    if (!this.initialized) {
+      this.initialized = !0, this.xPrev = this.createTypedArray(t, t), this.dxPrev = this.createTypedArray(t, t.length), this.dxScratch = this.createTypedArray(t, t.length), this.dxHatScratch = this.createTypedArray(t, t.length), this.tPrev = r;
+      const e = h || this.createTypedArray(t, t.length);
+      return e.set(t), e;
+    }
+    const o = r - this.tPrev;
+    if (o <= 0) {
+      const e = h || this.createTypedArray(t, t.length);
+      return e.set(this.xPrev), e;
+    }
+    if (this.xPrev.length !== t.length) {
+      const e = this.xPrev, d = this.dxPrev;
+      this.xPrev = this.createTypedArray(t, t.length), this.dxPrev = this.createTypedArray(t, t.length);
+      for (let i = 0; i < t.length; i++)
+        this.xPrev[i] = i < e.length ? e[i] : t[i], this.dxPrev[i] = i < d.length ? d[i] : 0;
+    }
+    let c = this.dxScratch, l = this.dxHatScratch;
+    c.length !== t.length && (c = this.createTypedArray(t, t.length), l = this.createTypedArray(t, t.length), this.dxScratch = c, this.dxHatScratch = l);
+    const { xPrev: v, dxPrev: g } = this, P = this.smoothingFactor(o, this.dCutOff), a = h || this.createTypedArray(t, t.length);
+    for (let e = 0; e < t.length; e++) {
+      c[e] = (t[e] - v[e]) / o, l[e] = this.exponentialSmoothing(P, c[e], g[e]);
+      const d = this.minCutOff + this.beta * Math.abs(l[e]), i = this.smoothingFactor(o, d);
+      a[e] = this.exponentialSmoothing(i, t[e], v[e]);
+    }
+    return this.xPrev.length !== a.length && (this.xPrev = this.createTypedArray(t, a.length), this.dxPrev = this.createTypedArray(t, a.length)), this.xPrev.set(a), this.dxPrev.set(l), this.tPrev = r, a;
+  }
+}
+export {
+  S as OneEuroFilter
+};
+//# sourceMappingURL=OneEuroFilter.mjs.map
