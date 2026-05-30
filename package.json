@@ -1,6 +1,6 @@
 {
   "name": "@webarkit/oneeurofilter-ts",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "One euro filter algorithm with typescript support",
   "main": "dist/OneEuroFilter.js",
   "module": "dist/OneEuroFilter.mjs",
@@ -23,9 +23,9 @@
   "author": "Walter Perdan",
   "license": "LGPL-3.0",
   "devDependencies": {
-    "typescript": "5.8.2",
-    "vite": "^5.4.14",
-    "vite-plugin-dts": "^3.9.1",
-    "vitest": "^1.6.0"
+    "typescript": "6.0.3",
+    "vite": "^8.0.14",
+    "vite-plugin-dts": "^5.0.1",
+    "vitest": "^4.1.7"
   }
 }
