@@ -1,7 +1,7 @@
 <!--<script src="../dist/OneEuroFilter.js"></script>
 <script>
     var filter = new OneEuroFilter(120, 0.1, 0.1, 1.0);
-    var filtered = filter.filter(0.001,[0.2,0.4,0.6,0.8,1.0]);
+    var filtered = filter.filter(0.001, new Float32Array([0.2,0.4,0.6,0.8,1.0]));
     console.log(filtered);
 </script>-->
 
@@ -9,6 +9,6 @@
     import {OneEuroFilter} from '../dist/OneEuroFilter.mjs';
 
     var filter = new OneEuroFilter(120, 0.1, 0.1, 1.0);
-    var filtered = filter.filter(0.001,[0.2,0.4,0.6,0.8,1.0]);
+    var filtered = filter.filter(0.001, new Float32Array([0.2,0.4,0.6,0.8,1.0]));
     console.log(filtered);
 </script>

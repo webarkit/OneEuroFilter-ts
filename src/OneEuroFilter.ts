@@ -38,16 +38,24 @@
 import packageJson from "../package.json";
 const { version } = packageJson;
 
+/** Supported typed array types for filter input/output. */
+export type FilterDataArray = Float32Array | Float64Array;
+
 
 export class OneEuroFilter {
     private minCutOff: number;
     private beta: number;
     private dCutOff: number;
-    private xPrev: number[] | null;
-    private dxPrev: number[] | null;
+    private xPrev: FilterDataArray | null;
+    private dxPrev: FilterDataArray | null;
     private tPrev: number | null;
     private initialized: boolean;
     private version: string = version;
+
+    // High performance scratch buffers to avoid allocations at run-time
+    private dxScratch: FilterDataArray | null = null;
+    private dxHatScratch: FilterDataArray | null = null;
+
     constructor(minCutOff: number, beta: number) {
         this.minCutOff = minCutOff;
         this.beta = beta;
@@ -73,26 +81,74 @@ export class OneEuroFilter {
         this.initialized = false;
     }
 
-    filter(t: number, x: number[]) {
+    /**
+     * Creates a new typed array of the same type as the source.
+     * @param source - The source typed array to match the type of.
+     * @param lengthOrData - The length for a zero-filled array, or data to copy.
+     * @returns A new typed array of the same type as the source.
+     */
+    private createTypedArray<T extends FilterDataArray>(source: T, lengthOrData: number | ArrayLike<number>): T {
+        const Ctor = source.constructor as { new (arg: number | ArrayLike<number>): T };
+        return new Ctor(lengthOrData);
+    }
+
+    /**
+     * Filters the input signal using the One Euro Filter algorithm.
+     * Accepts either Float32Array or Float64Array.
+     * @param t - The timestamp of the current sample.
+     * @param x - The input signal as a Float32Array or Float64Array.
+     * @param out - Optional pre-allocated destination array to write the result into, achieving zero allocation.
+     * @returns The filtered signal array.
+     */
+    filter<T extends FilterDataArray>(t: number, x: T, out?: T): T {
         if (!this.initialized) {
             this.initialized = true;
-            this.xPrev = x;
-            this.dxPrev = x.map(() => 0);
+            this.xPrev = this.createTypedArray(x, x);
+            this.dxPrev = this.createTypedArray(x, x.length);
+            this.dxScratch = this.createTypedArray(x, x.length);
+            this.dxHatScratch = this.createTypedArray(x, x.length);
             this.tPrev = t;
-            return x;
+
+            const res = out || this.createTypedArray(x, x.length);
+            res.set(x);
+            return res;
         }
 
-        const { xPrev, tPrev, dxPrev } = this;
+        const te = t - this.tPrev!;
+        // Safeguard against zero/negative time differences
+        if (te <= 0) {
+            const res = out || this.createTypedArray(x, x.length);
+            res.set(this.xPrev!);
+            return res;
+        }
 
-        //console.log("filter", x, xPrev, x.map((xx, i) => x[i] - xPrev[i]));
+        // Safety check to resize persistent and scratch arrays if the input length changes dynamically
+        if (this.xPrev!.length !== x.length) {
+            const oldXPrev = this.xPrev!;
+            const oldDxPrev = this.dxPrev!;
 
-        const te = t - tPrev!;
+            this.xPrev = this.createTypedArray(x, x.length);
+            this.dxPrev = this.createTypedArray(x, x.length);
 
+            for (let i = 0; i < x.length; i++) {
+                this.xPrev[i] = i < oldXPrev.length ? oldXPrev[i] : x[i];
+                this.dxPrev[i] = i < oldDxPrev.length ? oldDxPrev[i] : 0;
+            }
+        }
+
+        let dx = this.dxScratch!;
+        let dxHat = this.dxHatScratch!;
+        if (dx.length !== x.length) {
+            dx = this.createTypedArray(x, x.length);
+            dxHat = this.createTypedArray(x, x.length);
+            this.dxScratch = dx;
+            this.dxHatScratch = dxHat;
+        }
+
+        const { xPrev, dxPrev } = this;
         const ad = this.smoothingFactor(te, this.dCutOff);
+        const xHat = out || this.createTypedArray(x, x.length);
 
-        const dx: number[] = [];
-        const dxHat: number[] = [];
-        const xHat: number[] = [];
         for (let i = 0; i < x.length; i++) {
             // The filtered derivative of the signal.
             dx[i] = (x[i] - xPrev![i]) / te;
@@ -104,9 +160,13 @@ export class OneEuroFilter {
             xHat[i] = this.exponentialSmoothing(a, x[i], xPrev![i]);
         }
 
-        // update prev
-        this.xPrev = xHat;
-        this.dxPrev = dxHat;
+        // Store persistent state by copying instead of re-allocating
+        if (this.xPrev!.length !== xHat.length) {
+            this.xPrev = this.createTypedArray(x, xHat.length);
+            this.dxPrev = this.createTypedArray(x, xHat.length);
+        }
+        this.xPrev!.set(xHat);
+        this.dxPrev!.set(dxHat);
         this.tPrev = t;
 
         return xHat;
