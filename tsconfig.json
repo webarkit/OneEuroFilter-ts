@@ -7,9 +7,11 @@
       "declarationDir": "./types",
       "allowSyntheticDefaultImports": true,
        /* Module Resolution Options */
-      "moduleResolution": "node",            /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
+      "moduleResolution": "bundler",         /* Specify module resolution strategy: 'bundler', 'node10' or 'classic'. */
       /* Advanced Options */
       "resolveJsonModule": true,                /* Include modules imported with '.json' extension */
       "outDir": "dist",                        /* Redirect output structure to the directory. */
-    }
+      "skipLibCheck": true,                    /* Skip type checking of declaration files. */
+    },
+    "include": ["src", "test", "vite.config.ts"]
   }
