@@ -1,5 +1,6 @@
 // package.json
-var e = "0.2.0", t = class {
+var e = "0.2.0", t = !1, n = class n {
+	static version = e;
 	minCutOff;
 	beta;
 	dCutOff;
@@ -7,11 +8,10 @@ var e = "0.2.0", t = class {
 	dxPrev;
 	tPrev;
 	initialized;
-	version = e;
 	dxScratch = null;
 	dxHatScratch = null;
-	constructor(e, t) {
-		this.minCutOff = e, this.beta = t, this.dCutOff = .001, this.xPrev = null, this.dxPrev = null, this.tPrev = null, this.initialized = !1, console.log("OneEuroFilter: ", this.version);
+	constructor(e, r) {
+		this.minCutOff = e, this.beta = r, this.dCutOff = .001, this.xPrev = null, this.dxPrev = null, this.tPrev = null, this.initialized = !1, t ||= (console.log("OneEuroFilter: ", n.version), !0);
 	}
 	smoothingFactor(e, t) {
 		let n = 2 * Math.PI * t * e;
@@ -54,6 +54,6 @@ var e = "0.2.0", t = class {
 		return this.xPrev.length !== l.length && (this.xPrev = this.createTypedArray(t, l.length), this.dxPrev = this.createTypedArray(t, l.length)), this.xPrev.set(l), this.dxPrev.set(a), this.tPrev = e, l;
 	}
 };
-export { t as OneEuroFilter };
+export { n as OneEuroFilter };
 
 //# sourceMappingURL=OneEuroFilter.mjs.map

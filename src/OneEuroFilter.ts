@@ -37,12 +37,15 @@
  */
 import  { version } from "../package.json";
 
-
 /** Supported typed array types for filter input/output. */
 export type FilterDataArray = Float32Array | Float64Array;
 
+// The version is logged once per module, not once per filter instance
+let versionLogged = false;
 
 export class OneEuroFilter {
+    static readonly version: string = version;
+
     private minCutOff: number;
     private beta: number;
     private dCutOff: number;
@@ -50,7 +53,6 @@ export class OneEuroFilter {
     private dxPrev: FilterDataArray | null;
     private tPrev: number | null;
     private initialized: boolean;
-    private version: string = version;
 
     // High performance scratch buffers to avoid allocations at run-time
     private dxScratch: FilterDataArray | null = null;
@@ -65,7 +67,10 @@ export class OneEuroFilter {
         this.dxPrev = null;
         this.tPrev = null;
         this.initialized = false;
-        console.log("OneEuroFilter: ", this.version);
+        if (!versionLogged) {
+            console.log("OneEuroFilter: ", OneEuroFilter.version);
+            versionLogged = true;
+        }
     }
 
     smoothingFactor(te: number, cutoff: number): number {
