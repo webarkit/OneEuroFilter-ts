@@ -1,6 +1,7 @@
 /** Supported typed array types for filter input/output. */
 export type FilterDataArray = Float32Array | Float64Array;
 export declare class OneEuroFilter {
+    static readonly version: string;
     private minCutOff;
     private beta;
     private dCutOff;
@@ -8,7 +9,6 @@ export declare class OneEuroFilter {
     private dxPrev;
     private tPrev;
     private initialized;
-    private version;
     private dxScratch;
     private dxHatScratch;
     constructor(minCutOff: number, beta: number);

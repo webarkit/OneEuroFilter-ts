@@ -1,7 +1,14 @@
 # OneEuroFilter-ts
 
+[![CI](https://github.com/webarkit/OneEuroFilter-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/webarkit/OneEuroFilter-ts/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@webarkit/oneeurofilter-ts)](https://www.npmjs.com/package/@webarkit/oneeurofilter-ts)
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![TypeScript](https://img.shields.io/badge/TypeScript-ready-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![GitHub stars](https://img.shields.io/github/stars/webarkit/OneEuroFilter-ts?style=social)](https://github.com/webarkit/OneEuroFilter-ts/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/webarkit/OneEuroFilter-ts?style=social)](https://github.com/webarkit/OneEuroFilter-ts/network/members)
+
 This code is a translation to Typescript of the original code from [Jaan Tollander](https://jaantollander.com/post/noise-filtering-using-one-euro-filter/#mjx-eqn%3A1).
-It's not well tested yet, so I can not assure of the correctness of the code.
+The code is covered by a unit test suite (`npm test`), but it has not been validated extensively on real-world data, so check the results for your use case.
 
 
 ## Installation
@@ -13,6 +20,15 @@ npm install @webarkit/oneeurofilter-ts
 Install with yarn:
 ```bash
 yarn add @webarkit/oneeurofilter-ts
+```
+
+## Version
+
+The package version is available as the static property `OneEuroFilter.version`, without creating a filter instance:
+```typescript
+import { OneEuroFilter } from "@webarkit/oneeurofilter-ts";
+
+console.log(OneEuroFilter.version); // e.g. "0.2.0"
 ```
 
 ## Usage
