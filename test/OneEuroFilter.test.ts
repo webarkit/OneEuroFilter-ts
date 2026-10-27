@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { OneEuroFilter } from '../src/OneEuroFilter';
+import { version } from '../package.json';
 
 describe('OneEuroFilter', () => {
   it('should initialize correctly with parameters', () => {
@@ -170,6 +171,25 @@ describe('OneEuroFilter', () => {
       // The next call should be treated as a fresh initialization call, returning the input directly
       const result = filter.filter(1016, input2);
       expect(result).toEqual(input2);
+    });
+  });
+
+  describe('Version Logging', () => {
+    it('should expose the package version as a static property', () => {
+      expect(OneEuroFilter.version).toBe(version);
+    });
+
+    it('should log the version only once across multiple instances', async () => {
+      // Load a fresh module so the module-level logging flag starts unset
+      vi.resetModules();
+      const { OneEuroFilter: FreshFilter } = await import('../src/OneEuroFilter');
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      new FreshFilter(120, 0.1);
+      new FreshFilter(120, 0.1);
+
+      expect(logSpy).toHaveBeenCalledTimes(1);
+      logSpy.mockRestore();
     });
   });
 });
