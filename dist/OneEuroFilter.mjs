@@ -1,36 +1,5 @@
-//#endregion
-//#region src/OneEuroFilter.ts
-var { version: e } = {
-	name: "@webarkit/oneeurofilter-ts",
-	version: "0.2.0",
-	description: "One euro filter algorithm with typescript support",
-	main: "dist/OneEuroFilter.js",
-	module: "dist/OneEuroFilter.mjs",
-	types: "types/index.d.ts",
-	scripts: {
-		"build-ts": "vite build",
-		test: "vitest run",
-		"test:watch": "vitest"
-	},
-	repository: {
-		type: "git",
-		url: "https://github.com/webarkit/OneEuroFilter-ts"
-	},
-	keywords: [
-		"one",
-		"euro",
-		"filter",
-		"oef"
-	],
-	author: "Walter Perdan",
-	license: "LGPL-3.0",
-	devDependencies: {
-		typescript: "6.0.3",
-		vite: "^8.0.14",
-		"vite-plugin-dts": "^5.0.1",
-		vitest: "^4.1.7"
-	}
-}, t = class {
+// package.json
+var e = "0.2.0", t = class {
 	minCutOff;
 	beta;
 	dCutOff;
@@ -85,7 +54,6 @@ var { version: e } = {
 		return this.xPrev.length !== l.length && (this.xPrev = this.createTypedArray(t, l.length), this.dxPrev = this.createTypedArray(t, l.length)), this.xPrev.set(l), this.dxPrev.set(a), this.tPrev = e, l;
 	}
 };
-//#endregion
 export { t as OneEuroFilter };
 
 //# sourceMappingURL=OneEuroFilter.mjs.map

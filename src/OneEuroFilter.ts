@@ -35,8 +35,8 @@
  *  Ref: https://jaantollander.com/post/noise-filtering-using-one-euro-filter/#mjx-eqn%3A1
  * 
  */
-import packageJson from "../package.json";
-const { version } = packageJson;
+import  { version } from "../package.json";
+
 
 /** Supported typed array types for filter input/output. */
 export type FilterDataArray = Float32Array | Float64Array;
