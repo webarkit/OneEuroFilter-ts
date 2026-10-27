@@ -8,7 +8,7 @@
 [![GitHub forks](https://img.shields.io/github/forks/webarkit/OneEuroFilter-ts?style=social)](https://github.com/webarkit/OneEuroFilter-ts/network/members)
 
 This code is a translation to Typescript of the original code from [Jaan Tollander](https://jaantollander.com/post/noise-filtering-using-one-euro-filter/#mjx-eqn%3A1).
-It's not well tested yet, so I can not assure of the correctness of the code.
+The code is covered by a unit test suite (`npm test`), but it has not been validated extensively on real-world data, so check the results for your use case.
 
 
 ## Installation
