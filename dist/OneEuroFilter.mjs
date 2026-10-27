@@ -1,5 +1,5 @@
 // package.json
-var e = "0.2.0", t = !1, n = class n {
+var e = "0.2.1", t = !1, n = class n {
 	static version = e;
 	minCutOff;
 	beta;
