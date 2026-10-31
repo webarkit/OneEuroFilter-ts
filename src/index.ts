@@ -39,7 +39,7 @@
  * 
  */
 import { OneEuroFilter } from "./OneEuroFilter";
-import type { FilterDataArray } from "./OneEuroFilter";
+import type { FilterDataArray, FilterStepResult } from "./OneEuroFilter";
 
 export { OneEuroFilter }
-export type { FilterDataArray }
+export type { FilterDataArray, FilterStepResult }

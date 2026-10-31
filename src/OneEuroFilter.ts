@@ -43,6 +43,14 @@ import  { version } from "../package.json";
 /** Supported typed array types for filter input/output. */
 export type FilterDataArray = Float32Array | Float64Array;
 
+/** Result of {@link OneEuroFilter.filterStep}. */
+export interface FilterStepResult<T extends FilterDataArray> {
+    /** The smoothed step: `step[i] = alpha[i] * inputStep[i]`. */
+    step: T;
+    /** The smoothing factor α of each component, in (0, 1]; 0 when the time delta is not positive. */
+    alpha: T;
+}
+
 export class OneEuroFilter {
     static readonly version: string = version;
 
@@ -83,6 +91,7 @@ export class OneEuroFilter {
 
     reset() {
         this.initialized = false;
+        this.dxPrev = null;
     }
 
     /**
@@ -94,6 +103,37 @@ export class OneEuroFilter {
     private createTypedArray<T extends FilterDataArray>(source: T, lengthOrData: number | ArrayLike<number>): T {
         const Ctor = source.constructor as { new (arg: number | ArrayLike<number>): T };
         return new Ctor(lengthOrData);
+    }
+
+    /**
+     * Makes sure the scratch buffers have the given length, reallocating them with the type of `source` if not.
+     */
+    private ensureScratch(source: FilterDataArray): void {
+        if (this.dxScratch === null || this.dxScratch.length !== source.length) {
+            this.dxScratch = this.createTypedArray(source, source.length);
+            this.dxHatScratch = this.createTypedArray(source, source.length);
+        }
+    }
+
+    /**
+     * The per-component core shared by {@link filter} and {@link filterStep}.
+     * Updates the filtered derivative of component `i` in the scratch buffers and returns its smoothing factor α.
+     * @param i - The component index.
+     * @param te - The time delta, > 0.
+     * @param step - The raw change of component `i` since the previous filtered value.
+     * @param ad - The smoothing factor of the derivative filter for `te`.
+     */
+    private componentAlpha(i: number, te: number, step: number, ad: number): number {
+        const dx = this.dxScratch!;
+        const dxHat = this.dxHatScratch!;
+
+        // The filtered derivative of the signal.
+        dx[i] = step / te;
+        dxHat[i] = this.exponentialSmoothing(ad, dx[i], this.dxPrev![i]);
+
+        // The cutoff grows with the speed
+        const cutOff = this.minCutOff + this.beta * Math.abs(dxHat[i]);
+        return this.smoothingFactor(te, cutOff);
     }
 
     /**
@@ -127,7 +167,8 @@ export class OneEuroFilter {
         }
 
         // Safety check to resize persistent and scratch arrays if the input length changes dynamically
-        if (this.xPrev!.length !== x.length) {
+        // (dxPrev can differ only if filterStep() was called on this instance with another length)
+        if (this.xPrev!.length !== x.length || this.dxPrev!.length !== x.length) {
             const oldXPrev = this.xPrev!;
             const oldDxPrev = this.dxPrev!;
 
@@ -140,27 +181,16 @@ export class OneEuroFilter {
             }
         }
 
-        let dx = this.dxScratch!;
-        let dxHat = this.dxHatScratch!;
-        if (dx.length !== x.length) {
-            dx = this.createTypedArray(x, x.length);
-            dxHat = this.createTypedArray(x, x.length);
-            this.dxScratch = dx;
-            this.dxHatScratch = dxHat;
-        }
+        this.ensureScratch(x);
 
-        const { xPrev, dxPrev } = this;
+        const { xPrev } = this;
         const ad = this.smoothingFactor(te, this.dCutOff);
         const xHat = out || this.createTypedArray(x, x.length);
 
         for (let i = 0; i < x.length; i++) {
-            // The filtered derivative of the signal.
-            dx[i] = (x[i] - xPrev![i]) / te;
-            dxHat[i] = this.exponentialSmoothing(ad, dx[i], dxPrev![i]);
+            const a = this.componentAlpha(i, te, x[i] - xPrev![i], ad);
 
             // The filtered signal
-            const cutOff = this.minCutOff + this.beta * Math.abs(dxHat[i]);
-            const a = this.smoothingFactor(te, cutOff);
             xHat[i] = this.exponentialSmoothing(a, x[i], xPrev![i]);
         }
 
@@ -170,9 +200,53 @@ export class OneEuroFilter {
             this.dxPrev = this.createTypedArray(x, xHat.length);
         }
         this.xPrev!.set(xHat);
-        this.dxPrev!.set(dxHat);
+        this.dxPrev!.set(this.dxHatScratch!);
         this.tPrev = t;
 
         return xHat;
+    }
+
+    /**
+     * Smooths a step computed by the caller, for example a rotation's step in its tangent space.
+     * @param te - The time elapsed since the previous step.
+     * @param step - The raw step of each component since the previous filtered value.
+     * @param out - Optional pre-allocated destination for the smoothed step.
+     * @param alphaOut - Optional pre-allocated destination for the smoothing factors.
+     * @returns The smoothed step and the smoothing factor of each component.
+     */
+    filterStep<T extends FilterDataArray>(te: number, step: T, out?: T, alphaOut?: T): FilterStepResult<T> {
+        const n = step.length;
+        const stepOut = out || this.createTypedArray(step, n);
+        const alpha = alphaOut || this.createTypedArray(step, n);
+
+        // Safeguard against zero/negative time differences: no movement, state unchanged
+        if (te <= 0) {
+            stepOut.fill(0, 0, n);
+            alpha.fill(0, 0, n);
+            return { step: stepOut, alpha };
+        }
+
+        // New components start with a zero derivative, as in filter()
+        if (this.dxPrev === null || this.dxPrev.length !== n) {
+            const oldDxPrev = this.dxPrev;
+            this.dxPrev = this.createTypedArray(step, n);
+            if (oldDxPrev !== null) {
+                for (let i = 0; i < n && i < oldDxPrev.length; i++) {
+                    this.dxPrev[i] = oldDxPrev[i];
+                }
+            }
+        }
+        this.ensureScratch(step);
+
+        const ad = this.smoothingFactor(te, this.dCutOff);
+        for (let i = 0; i < n; i++) {
+            const s = step[i];
+            const a = this.componentAlpha(i, te, s, ad);
+            stepOut[i] = a * s;
+            alpha[i] = a;
+        }
+        this.dxPrev.set(this.dxHatScratch!);
+
+        return { step: stepOut, alpha };
     }
 }
