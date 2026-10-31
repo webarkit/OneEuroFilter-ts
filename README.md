@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/webarkit/OneEuroFilter-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/webarkit/OneEuroFilter-ts/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/@webarkit/oneeurofilter-ts)](https://www.npmjs.com/package/@webarkit/oneeurofilter-ts)
-[![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![License: LGPL v3+](https://img.shields.io/badge/License-LGPL_v3%2B-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-ready-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![GitHub stars](https://img.shields.io/github/stars/webarkit/OneEuroFilter-ts?style=social)](https://github.com/webarkit/OneEuroFilter-ts/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/webarkit/OneEuroFilter-ts?style=social)](https://github.com/webarkit/OneEuroFilter-ts/network/members)
@@ -110,3 +110,8 @@ filter.filter(Date.now(), yourData);
 </script>
 
 ```
+## License
+
+OneEuroFilter-ts is licensed under the GNU Lesser General Public License, version 3 or (at your option) any later version (SPDX: `LGPL-3.0-or-later`), with a linking exception: you may link it with independent modules and distribute the result under terms of your choice, provided each independent module's own licence is respected.
+
+See [LICENSE](LICENSE) for the exception and the LGPL-3.0 text, and [COPYING](COPYING) for the GPL-3.0 text that the LGPL builds on.
