@@ -202,6 +202,7 @@ describe('OneEuroFilter', () => {
 
     it.each([0, -0.001, NaN, Infinity, -Infinity])('rejects %s with a RangeError', (value) => {
       expect(() => new OneEuroFilter(0.001, 0.5, value)).toThrow(RangeError);
+      expect(() => new OneEuroFilter(0.001, 0.5, value)).toThrow(/dCutOff/);
     });
   });
 
