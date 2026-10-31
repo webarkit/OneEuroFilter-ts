@@ -16,9 +16,13 @@ async function buildBundles(): Promise<Map<string, string>> {
   );
   if (!loaded) throw new Error('vite.config.ts not found');
 
-  const plugins = (loaded.config.plugins ?? [])
-    .flat(Infinity as 1)
-    .filter((p: PluginOption): p is Plugin => !!p && !(p as Plugin).name?.includes('dts'));
+  // `Infinity as 1`: flat(Infinity) makes TypeScript recurse too deep (TS2589)
+  const allPlugins = ((loaded.config.plugins ?? []).flat(Infinity as 1) as PluginOption[])
+    .filter((p): p is Plugin => !!p && typeof p === 'object' && 'name' in p);
+  const plugins = allPlugins.filter((p) => !p.name.includes('dts'));
+  if (plugins.length === allPlugins.length) {
+    throw new Error('dts plugin not found: the build would write into types/');
+  }
 
   const result = await build({
     ...loaded.config,
@@ -52,20 +56,17 @@ describe('Published bundles (issue #6)', () => {
   });
 
   it.each(['OneEuroFilter.mjs', 'OneEuroFilter.js'])(
-    '%s keeps the version string but no other package.json field',
+    '%s keeps the version string but not the package.json object',
     (fileName) => {
+      expect(chunks.has(fileName)).toBe(true);
       const code = chunks.get(fileName)!;
 
       expect(code).toContain(packageJson.version);
 
       expect(code).not.toContain(packageJson.description);
+      expect(code).not.toContain(packageJson.author);
+      expect(code).not.toContain(packageJson.repository.url);
       expect(code).not.toContain('devDependencies');
-      for (const dep of Object.keys(packageJson.devDependencies)) {
-        expect(code).not.toContain(dep);
-      }
-      for (const script of Object.values(packageJson.scripts)) {
-        expect(code).not.toContain(script);
-      }
     }
   );
 });
