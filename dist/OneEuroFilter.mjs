@@ -1,6 +1,6 @@
-// package.json
-var e = "0.3.0", t = class {
-	static version = e;
+// src/OneEuroFilter.ts
+var e = class {
+	static version = "0.3.0";
 	minCutOff;
 	beta;
 	dCutOff;
@@ -87,6 +87,6 @@ var e = "0.3.0", t = class {
 		};
 	}
 };
-export { t as OneEuroFilter };
+export { e as OneEuroFilter };
 
 //# sourceMappingURL=OneEuroFilter.mjs.map

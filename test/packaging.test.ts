@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync, execSync } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { version } from '../package.json';
@@ -25,7 +25,7 @@ function run(command: string, args: string[], cwd: string): string {
 /** Fails with a clear message when the built files are missing or older than their sources. */
 function assertFreshBuild(): void {
   const built = ['dist/OneEuroFilter.mjs', 'dist/OneEuroFilter.js', 'types/index.d.ts', 'types/index.d.mts'];
-  const sources = ['package.json', ...readdirSync(path.join(root, 'src')).map((f) => `src/${f}`)];
+  const sources = ['package.json', 'vite.config.ts', ...readdirSync(path.join(root, 'src')).map((f) => `src/${f}`)];
   const mtime = (f: string) => statSync(path.join(root, f)).mtimeMs;
   const newestSource = Math.max(...sources.map(mtime));
   const problems = built.flatMap((f) => {
@@ -57,4 +57,15 @@ describe('Packaging', () => {
       rmSync(tmp, { recursive: true, force: true, maxRetries: 3 });
     }
   }, 120_000);
+
+  it.each(['dist/OneEuroFilter.mjs.map', 'dist/OneEuroFilter.js.map'])(
+    '%s does not embed package.json',
+    (file) => {
+      assertFreshBuild();
+      const map = JSON.parse(readFileSync(path.join(root, file), 'utf8')) as { sources: string[] };
+
+      // sourcesContent holds the text of each source, so this also keeps package.json's text out
+      expect(map.sources).toEqual(['../src/OneEuroFilter.ts']);
+    }
+  );
 });

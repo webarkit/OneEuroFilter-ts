@@ -141,6 +141,7 @@ filterStep<T extends FilterDataArray>(te: number, step: T, out?: T, alphaOut?: T
 - [ ] Run: FAIL (no `.d.mts`, no `exports`).
 - [ ] Implement: `src/index.ts` imports `./OneEuroFilter.js`; `vite.config.ts` dts `afterBuild` writes each `types/*.d.ts` as `*.d.mts` with relative `.js` specifiers rewritten to `.mjs`; add `exports`.
 - [ ] `npm run build-ts && npm test`: PASS. Check `types/*.d.ts` and `*.d.mts` import specifiers by eye. Review, commit `feat: add exports map for ESM and CJS consumers`.
+- [x] Added later (found by the #6 test review): the source maps listed `../package.json` and carried its full text in `sourcesContent`, and they ship in the tarball. The cause is the `import { version } from "../package.json"` in `src/OneEuroFilter.ts`; it becomes `declare const __VERSION__` plus `define` in `vite.config.ts`, so package.json leaves the bundle graph and the maps keep only `src/OneEuroFilter.ts` (still with its source, for debugging). Test: each map's `sources` is exactly `['../src/OneEuroFilter.ts']`; `assertFreshBuild()` now also treats `vite.config.ts` as a build input.
 
 ### Task 8: Version 0.3.0
 

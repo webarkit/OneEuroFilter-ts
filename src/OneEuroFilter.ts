@@ -40,7 +40,10 @@
  *  Ref: https://jaantollander.com/post/noise-filtering-using-one-euro-filter/#mjx-eqn%3A1
  * 
  */
-import  { version } from "../package.json";
+// The package version, replaced at build time (see "define" in vite.config.ts) so that
+// package.json does not end up in the bundles or their source maps. Build or test this file
+// through vite.config.ts: elsewhere, loading it throws a ReferenceError.
+declare const __VERSION__: string;
 
 /** Supported typed array types for filter input/output. */
 export type FilterDataArray = Float32Array | Float64Array;
@@ -68,7 +71,7 @@ export interface FilterStepResult<T extends FilterDataArray> {
  */
 export class OneEuroFilter {
     /** The package version. */
-    static readonly version: string = version;
+    static readonly version: string = __VERSION__;
 
     private minCutOff: number;
     private beta: number;
