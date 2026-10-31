@@ -174,6 +174,37 @@ describe('OneEuroFilter', () => {
     });
   });
 
+  describe('dCutOff', () => {
+    // 3 components, irregular frame times (ms), a speed change half way
+    const run = (filter: OneEuroFilter) => {
+      const outputs: number[][] = [];
+      let t = 0;
+      for (let k = 0; k < 12; k++) {
+        t += 12 + (k % 3) * 7;
+        const v = k < 6 ? 0.01 : 0.2;
+        const x = new Float64Array([v * t, -0.5 * v * t, 3 + Math.sin(t / 50)]);
+        outputs.push(Array.from(filter.filter(t, x)));
+      }
+      return outputs;
+    };
+
+    it('defaults to 0.001 when omitted', () => {
+      expect(run(new OneEuroFilter(0.001, 0.5))).toEqual(run(new OneEuroFilter(0.001, 0.5, 0.001)));
+    });
+
+    it('treats undefined as the default', () => {
+      expect(run(new OneEuroFilter(0.001, 0.5, undefined))).toEqual(run(new OneEuroFilter(0.001, 0.5)));
+    });
+
+    it('changes the output when set to another value', () => {
+      expect(run(new OneEuroFilter(0.001, 0.5, 0.01))).not.toEqual(run(new OneEuroFilter(0.001, 0.5)));
+    });
+
+    it.each([0, -0.001, NaN, Infinity, -Infinity])('rejects %s with a RangeError', (value) => {
+      expect(() => new OneEuroFilter(0.001, 0.5, value)).toThrow(RangeError);
+    });
+  });
+
   describe('Version and side effects', () => {
     it('should expose the package version as a static property', () => {
       expect(OneEuroFilter.version).toBe(version);

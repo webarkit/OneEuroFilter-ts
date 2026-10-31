@@ -58,10 +58,13 @@ export class OneEuroFilter {
     private dxScratch: FilterDataArray | null = null;
     private dxHatScratch: FilterDataArray | null = null;
 
-    constructor(minCutOff: number, beta: number) {
+    constructor(minCutOff: number, beta: number, dCutOff: number = 0.001) {
+        if (!Number.isFinite(dCutOff) || dCutOff <= 0) {
+            throw new RangeError(`OneEuroFilter: dCutOff must be a finite number > 0, got ${dCutOff}`);
+        }
         this.minCutOff = minCutOff;
         this.beta = beta;
-        this.dCutOff = 0.001; // period in milliseconds, so default to 0.001 = 1Hz
+        this.dCutOff = dCutOff; // timestamps are in milliseconds, so the default 0.001 = 1Hz
 
         this.xPrev = null;
         this.dxPrev = null;
