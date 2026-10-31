@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync, execSync } from 'node:child_process';
-import { cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { version } from '../package.json';
@@ -22,10 +22,26 @@ function run(command: string, args: string[], cwd: string): string {
   }
 }
 
+/** Fails with a clear message when the built files are missing or older than their sources. */
+function assertFreshBuild(): void {
+  const built = ['dist/OneEuroFilter.mjs', 'dist/OneEuroFilter.js', 'types/index.d.ts', 'types/index.d.mts'];
+  const sources = ['package.json', ...readdirSync(path.join(root, 'src')).map((f) => `src/${f}`)];
+  const mtime = (f: string) => statSync(path.join(root, f)).mtimeMs;
+  const newestSource = Math.max(...sources.map(mtime));
+  const problems = built.flatMap((f) => {
+    if (!existsSync(path.join(root, f))) return [`${f} is missing`];
+    return mtime(f) < newestSource ? [`${f} is older than the sources`] : [];
+  });
+  if (problems.length > 0) {
+    throw new Error(`Run "npm run build-ts" before this test: ${problems.join(', ')}`);
+  }
+}
+
 // Packs the package as npm would publish it (so it needs a fresh `npm run build-ts`),
 // installs it into a NodeNext TypeScript project, type-checks it, and runs it from ESM and CommonJS.
 describe('Packaging', () => {
   it('resolves with its types from NodeNext ESM and CommonJS consumers', () => {
+    assertFreshBuild();
     const tmp = mkdtempSync(path.join(tmpdir(), 'oef-consumer-'));
     try {
       const [{ filename }] = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', tmp], root));
@@ -38,7 +54,7 @@ describe('Packaging', () => {
       expect(run(process.execPath, [path.join(consumer, 'out', 'esm.mjs')], consumer).trim()).toBe(`esm ${version} 2 1`);
       expect(run(process.execPath, [path.join(consumer, 'out', 'cjs.cjs')], consumer).trim()).toBe(`cjs ${version} 2 1`);
     } finally {
-      rmSync(tmp, { recursive: true, force: true });
+      rmSync(tmp, { recursive: true, force: true, maxRetries: 3 });
     }
   }, 120_000);
 });
