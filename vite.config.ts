@@ -23,7 +23,8 @@ export default defineConfig({
   plugins: [
     dts({
       insertTypesEntry: true,
-      outDirs: 'types',
+      // .d.ts for CommonJS consumers (require) and .d.mts for ESM consumers (import), see package.json "exports"
+      outDirs: ['types', { dir: 'types', moduleFormat: 'esm' }],
       entryRoot: 'src',
       copyDtsFiles: true,
       include: ['src']

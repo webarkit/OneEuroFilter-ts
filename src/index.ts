@@ -38,8 +38,8 @@
  *  Ref: https://jaantollander.com/post/noise-filtering-using-one-euro-filter/#mjx-eqn%3A1
  * 
  */
-import { OneEuroFilter } from "./OneEuroFilter";
-import type { FilterDataArray, FilterStepResult } from "./OneEuroFilter";
+import { OneEuroFilter } from "./OneEuroFilter.js";
+import type { FilterDataArray, FilterStepResult } from "./OneEuroFilter.js";
 
 export { OneEuroFilter }
 export type { FilterDataArray, FilterStepResult }

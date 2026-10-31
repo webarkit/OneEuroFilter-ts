@@ -5,6 +5,19 @@
   "main": "dist/OneEuroFilter.js",
   "module": "dist/OneEuroFilter.mjs",
   "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./types/index.d.mts",
+        "default": "./dist/OneEuroFilter.mjs"
+      },
+      "require": {
+        "types": "./types/index.d.ts",
+        "default": "./dist/OneEuroFilter.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
   "sideEffects": false,
   "scripts": {
     "build-ts": "vite build",
