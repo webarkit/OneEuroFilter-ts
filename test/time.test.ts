@@ -5,6 +5,7 @@ import { OneEuroFilter } from '../src/OneEuroFilter';
 describe('Time source', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('never reads a clock', () => {
@@ -13,13 +14,30 @@ describe('Time source', () => {
 
     const filter = new OneEuroFilter(0.001, 0.5, 0.002);
     for (let k = 0; k < 5; k++) filter.filter(1000 + 16 * k, new Float32Array([k, 2 * k]));
-    filter.filter(1064, new Float32Array([9, 9])); // repeated timestamp
+    filter.filter(1064, new Float32Array([9, 9])); // same timestamp as the last loop sample
     filter.reset();
     for (let k = 0; k < 3; k++) filter.filterStep(16, new Float64Array([0.1, -0.1]));
     filter.filterStep(0, new Float64Array([0.1, -0.1]));
 
     expect(dateNow).not.toHaveBeenCalled();
     expect(perfNow).not.toHaveBeenCalled();
+  });
+
+  it('gives the same output whatever the wall clock says', () => {
+    // Catches any clock read that affects the result, including new Date() and performance.now()
+    const runAt = (systemTime: number) => {
+      vi.useFakeTimers({ toFake: ['Date', 'performance'], now: systemTime });
+      const filter = new OneEuroFilter(0.001, 0.5);
+      const outputs: number[][] = [];
+      for (let k = 0; k < 6; k++) {
+        outputs.push(Array.from(filter.filter(1000 + 16 * k, new Float64Array([k, -2 * k]))));
+        vi.advanceTimersByTime(1000 * (k + 1));
+        outputs.push(Array.from(filter.filterStep(16, new Float64Array([0.5 * k])).step));
+      }
+      vi.useRealTimers();
+      return outputs;
+    };
+    expect(runAt(0)).toEqual(runAt(Date.UTC(2031, 5, 15, 12, 34, 56)));
   });
 
   const smoothed = () => {
