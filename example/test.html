@@ -1,14 +1,18 @@
 <!--<script src="../dist/OneEuroFilter.js"></script>
 <script>
-    var filter = new OneEuroFilter(120, 0.1, 0.1, 1.0);
-    var filtered = filter.filter(0.001, new Float32Array([0.2,0.4,0.6,0.8,1.0]));
+    // minCutOff = 0.001 cycles/ms (1 Hz), beta = 0.5; timestamps in milliseconds
+    var filter = new OneEuroFilter.OneEuroFilter(0.001, 0.5);
+    filter.filter(0, new Float32Array([0.2,0.4,0.6,0.8,1.0]));
+    var filtered = filter.filter(16, new Float32Array([0.3,0.5,0.7,0.9,1.1]));
     console.log(filtered);
 </script>-->
 
 <script type="module">
     import {OneEuroFilter} from '../dist/OneEuroFilter.mjs';
 
-    var filter = new OneEuroFilter(120, 0.1, 0.1, 1.0);
-    var filtered = filter.filter(0.001, new Float32Array([0.2,0.4,0.6,0.8,1.0]));
+    // minCutOff = 0.001 cycles/ms (1 Hz), beta = 0.5; timestamps in milliseconds
+    const filter = new OneEuroFilter(0.001, 0.5);
+    filter.filter(0, new Float32Array([0.2,0.4,0.6,0.8,1.0]));
+    const filtered = filter.filter(16, new Float32Array([0.3,0.5,0.7,0.9,1.1]));
     console.log(filtered);
 </script>
