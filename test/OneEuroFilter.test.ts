@@ -181,8 +181,8 @@ describe('OneEuroFilter', () => {
 
     it('should not write to the console on import, construction or filtering', async () => {
       const methods = ['log', 'info', 'warn', 'error', 'debug'] as const;
-      const spies = methods.map((m) => vi.spyOn(console, m).mockImplementation(() => {}));
       try {
+        const spies = methods.map((m) => vi.spyOn(console, m).mockImplementation(() => {}));
         // Load a fresh module so that module-level code runs again under the spies
         vi.resetModules();
         const { OneEuroFilter: FreshFilter } = await import('../src/OneEuroFilter');
@@ -197,7 +197,7 @@ describe('OneEuroFilter', () => {
           expect(spy).toHaveBeenCalledTimes(0);
         }
       } finally {
-        spies.forEach((spy) => spy.mockRestore());
+        vi.restoreAllMocks();
       }
     });
   });

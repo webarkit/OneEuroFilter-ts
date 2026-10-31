@@ -110,8 +110,9 @@ filter.filter(Date.now(), yourData);
 </script>
 
 ```
+
 ## License
 
-OneEuroFilter-ts is licensed under the GNU Lesser General Public License, version 3 or (at your option) any later version (SPDX: `LGPL-3.0-or-later`), with a linking exception: you may link it with independent modules and distribute the result under terms of your choice, provided each independent module's own licence is respected.
+OneEuroFilter-ts is licensed under the GNU Lesser General Public License, version 3 or (at your option) any later version (SPDX: `LGPL-3.0-or-later`), with a linking exception: you may link it with independent modules (modules neither derived from nor based on it) to produce an executable, and distribute that executable under terms of your choice, provided you meet each independent module's own licence. The library itself, including any modification of it, stays under the LGPL.
 
 See [LICENSE](LICENSE) for the exception and the LGPL-3.0 text, and [COPYING](COPYING) for the GPL-3.0 text that the LGPL builds on.

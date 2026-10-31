@@ -18,7 +18,7 @@
  *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  along with OneEuroFilter.  If not, see <https://www.gnu.org/licenses/>.
+ *  along with OneEuroFilter-ts.  If not, see <https://www.gnu.org/licenses/>.
  *
  *  As a special exception, the copyright holders of this library give you
  *  permission to link this library with independent modules to produce an
