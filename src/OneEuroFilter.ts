@@ -43,9 +43,6 @@ import  { version } from "../package.json";
 /** Supported typed array types for filter input/output. */
 export type FilterDataArray = Float32Array | Float64Array;
 
-// The version is logged once per module, not once per filter instance
-let versionLogged = false;
-
 export class OneEuroFilter {
     static readonly version: string = version;
 
@@ -70,10 +67,6 @@ export class OneEuroFilter {
         this.dxPrev = null;
         this.tPrev = null;
         this.initialized = false;
-        if (!versionLogged) {
-            console.log("OneEuroFilter: ", OneEuroFilter.version);
-            versionLogged = true;
-        }
     }
 
     smoothingFactor(te: number, cutoff: number): number {

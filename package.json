@@ -5,6 +5,7 @@
   "main": "dist/OneEuroFilter.js",
   "module": "dist/OneEuroFilter.mjs",
   "types": "types/index.d.ts",
+  "sideEffects": false,
   "scripts": {
     "build-ts": "vite build",
     "test": "vitest run",

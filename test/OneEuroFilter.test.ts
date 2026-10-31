@@ -174,22 +174,31 @@ describe('OneEuroFilter', () => {
     });
   });
 
-  describe('Version Logging', () => {
+  describe('Version and side effects', () => {
     it('should expose the package version as a static property', () => {
       expect(OneEuroFilter.version).toBe(version);
     });
 
-    it('should log the version only once across multiple instances', async () => {
-      // Load a fresh module so the module-level logging flag starts unset
-      vi.resetModules();
-      const { OneEuroFilter: FreshFilter } = await import('../src/OneEuroFilter');
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    it('should not write to the console on import, construction or filtering', async () => {
+      const methods = ['log', 'info', 'warn', 'error', 'debug'] as const;
+      const spies = methods.map((m) => vi.spyOn(console, m).mockImplementation(() => {}));
+      try {
+        // Load a fresh module so that module-level code runs again under the spies
+        vi.resetModules();
+        const { OneEuroFilter: FreshFilter } = await import('../src/OneEuroFilter');
 
-      new FreshFilter(120, 0.1);
-      new FreshFilter(120, 0.1);
+        const a = new FreshFilter(120, 0.1);
+        const b = new FreshFilter(120, 0.1);
+        a.filter(1000, new Float32Array([1, 2]));
+        a.filter(1016, new Float32Array([2, 3]));
+        b.filter(1000, new Float64Array([1, 2]));
 
-      expect(logSpy).toHaveBeenCalledTimes(1);
-      logSpy.mockRestore();
+        for (const spy of spies) {
+          expect(spy).toHaveBeenCalledTimes(0);
+        }
+      } finally {
+        spies.forEach((spy) => spy.mockRestore());
+      }
     });
   });
 });
