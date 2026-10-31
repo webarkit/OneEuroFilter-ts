@@ -47,11 +47,13 @@ export type FilterDataArray = Float32Array | Float64Array;
 
 /** Result of {@link OneEuroFilter.filterStep}. */
 export interface FilterStepResult<T extends FilterDataArray> {
-    /** The smoothed step: `step[i] = alpha[i] * inputStep[i]`. */
+    /** The smoothed step: `step[i] = alpha[i] * inputStep[i]` (exact for Float64Array; with Float32Array, `step` and `alpha` are rounded separately). */
     step: T;
     /**
-     * The smoothing factor α of each component: in [0, 1) for non-negative parameters, 1 where
-     * `2π * cutoff * te` overflows, and 0 when the time delta is not positive or is NaN.
+     * The smoothing factor α of each component: in [0, 1] for non-negative parameters, 1 where
+     * `2π * cutoff * te` overflows or is NaN, and 0 when the time delta is not positive or is NaN.
+     * A NaN in the step makes that component's filtered speed NaN, so its α stays 1 (no smoothing)
+     * until `reset()`.
      */
     alpha: T;
 }

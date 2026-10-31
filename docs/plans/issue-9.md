@@ -29,6 +29,7 @@
 - **`dCutOff`** = optional third constructor argument, default `0.001`. Throws `RangeError` when given and not a finite number > 0. `minCutOff` and `beta` stay unvalidated (validating them would be a behaviour change for existing callers).
 - **`filterStep(te, step, out?, alphaOut?)`** returns `{ step, alpha }` with **one α per component**, because the cutoff depends on `|dx̂ᵢ|` per component, exactly as in `filter()`. `stepOutᵢ = alphaᵢ · stepᵢ`. The caller applies it (`x̂ = x̂ₚᵣₑᵥ + stepOut`, or `R̂ = R̂ₚᵣₑᵥ · exp(stepOut)`).
 - **`te <= 0` in `filterStep`** returns a zero step and zero α and leaves the state untouched (same meaning as `filter()` returning the previous value).
+- **Added after review:** in `filterStep`, a NaN `te` is treated like `te <= 0`; α = 1 where `2π·cutoff·te` is not finite (as in the nft-tracker core; `filter()` keeps v0.2.1's NaN); `out`/`alphaOut` shorter than the step, or the same array, throw `RangeError`. The reference fixture got a zero-crossing component so it pins the Float32 rounding of the step, and its generator is committed in `test/fixtures/`. Tests ended up in `test/filterStep.test.ts`, `test/time.test.ts` and `test/packaging.test.ts`; `.d.mts` files come from vite-plugin-dts `outDirs` with `moduleFormat: 'esm'` rather than an `afterBuild` hook.
 - **`beta` units:** `beta` is in 1/(signal unit); time cancels, so its value is the same in the ms and s conventions. Only `minCutOff` and `dCutOff` change (Hz ÷ 1000).
 
 ## Review Focus
@@ -96,7 +97,7 @@ filterStep<T extends FilterDataArray>(te: number, step: T, out?: T, alphaOut?: T
   - `reset() clears the derivative state`: after reset, output equals a fresh filter's.
   - `new components start with zero derivative when the length grows`.
 - [ ] Run: FAIL (`filterStep` missing). The reference test passes before the refactor; keep it green throughout.
-- [ ] Implement: private helper `alphaAt(i: number, te: number, step: number, ad: number): number` writes `dxScratch[i] = step / te`, `dxHatScratch[i] = exponentialSmoothing(ad, dxScratch[i], dxPrev[i])`, returns `smoothingFactor(te, minCutOff + beta·|dxHatScratch[i]|)`. `filter()` calls it with `x[i] − xPrev[i]` (a double) and keeps `xHat[i] = exponentialSmoothing(a, x[i], xPrev[i])`. `filterStep()` allocates/resizes `dxPrev` and scratch (zeros for new components), calls the helper, writes `alphaOut[i] = a`, `out[i] = a * step[i]`, then `dxPrev.set(dxHatScratch)`. `reset()` also sets `dxPrev = null`.
+- [ ] Implement: private helper `componentAlpha(i: number, te: number, step: number, ad: number): number` writes `dxScratch[i] = step / te`, `dxHatScratch[i] = exponentialSmoothing(ad, dxScratch[i], dxPrev[i])`, returns `smoothingFactor(te, minCutOff + beta·|dxHatScratch[i]|)`. `filter()` calls it with `x[i] − xPrev[i]` (a double) and keeps `xHat[i] = exponentialSmoothing(a, x[i], xPrev[i])`. `filterStep()` allocates/resizes `dxPrev` and scratch (zeros for new components), calls the helper, writes `alphaOut[i] = a`, `out[i] = a * step[i]`, then `dxPrev.set(dxHatScratch)`. `reset()` also sets `dxPrev = null`.
 - [ ] Run: all PASS. Review, commit `feat: add filterStep() for caller-computed steps`.
 
 ### Task 5: Time only from timestamps (item 6)

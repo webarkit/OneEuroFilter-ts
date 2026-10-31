@@ -97,7 +97,7 @@ For each sample, the smoothing factor of a component is `α = r / (r + 1)` with 
 
 ## Filtering a step computed by the caller
 
-`filterStep(te, step, out?, alphaOut?)` is a lower-level method for signals whose step is not a plain difference, such as a rotation filtered in its tangent space. It takes the step of each component since the previous filtered value and the time delta `te` in milliseconds. It returns `{ step, alpha }`, where `step[i] = alpha[i] × input step[i]`. The caller applies the smoothed step.
+`filterStep(te, step, out?, alphaOut?)` is a lower-level method for signals whose step is not a plain difference, such as a rotation filtered in its tangent space. It takes the step of each component since the previous filtered value and the time delta `te` in milliseconds. It returns `{ step, alpha }`, where `step[i] = alpha[i] × input step[i]` (exactly with `Float64Array`; with `Float32Array` both are rounded separately). The caller applies the smoothed step.
 
 There is one `alpha` per component, because each component's cutoff depends on its own filtered speed, as in `filter()`. For a plain vector, `filterStep` gives the same result as `filter` up to rounding:
 
@@ -121,9 +121,20 @@ For a rotation, with `ω = log(R̂ᵀ R)` as the step, update `R̂ ← R̂ · ex
 More details:
 - Pass `out` and `alphaOut` (different arrays, at least as long as the step) to avoid allocating arrays.
 - When `te` is not positive, or is NaN, `filterStep` returns a zero step and zero `alpha` and leaves the filter unchanged.
+- A NaN in the step makes that component's filtered speed NaN: its `alpha` is then 1, so that component is no longer smoothed, until `reset()`.
 - `filterStep` only uses `te` multiplied by a cutoff and the step divided by `te`, so any units work if `te` and the cutoffs agree, for example seconds and Hz.
 - `reset()` resets the filtered speed; the caller resets its own filtered value.
 - Use one method and one array type per instance: `filter` and `filterStep` share the filtered speed, and the state keeps the array type of the first call.
+
+## Development
+
+```bash
+npm ci
+npm run build-ts
+npm test
+```
+
+Build before testing: `test/packaging.test.ts` packs and installs the built files from `dist/` and `types/`.
 
 ## Version
 
