@@ -263,11 +263,17 @@ export class OneEuroFilter {
      */
     filterStep<T extends FilterDataArray>(te: number, step: T, out?: T, alphaOut?: T): FilterStepResult<T> {
         const n = step.length;
+        if ((out && out.length < n) || (alphaOut && alphaOut.length < n)) {
+            throw new RangeError(`OneEuroFilter.filterStep: out and alphaOut need at least ${n} elements`);
+        }
+        if (out && out === alphaOut) {
+            throw new RangeError("OneEuroFilter.filterStep: out and alphaOut must be different arrays");
+        }
         const stepOut = out || this.createTypedArray(step, n);
         const alpha = alphaOut || this.createTypedArray(step, n);
 
-        // Safeguard against zero/negative time differences: no movement, state unchanged
-        if (te <= 0) {
+        // Safeguard against zero, negative and NaN time differences: no movement, state unchanged
+        if (!(te > 0)) {
             stepOut.fill(0, 0, n);
             alpha.fill(0, 0, n);
             return { step: stepOut, alpha };
@@ -285,10 +291,14 @@ export class OneEuroFilter {
         }
         this.ensureScratch(step);
 
-        const ad = this.smoothingFactor(te, this.dCutOff);
+        // α is NaN only when r = 2π * cutoff * te is not finite; take the limit, 1, as the nft-tracker core does.
+        // filter() keeps the v0.2.1 behaviour.
+        let ad = this.smoothingFactor(te, this.dCutOff);
+        if (ad !== ad) ad = 1;
         for (let i = 0; i < n; i++) {
             const s = step[i];
-            const a = this.componentAlpha(i, te, s, ad);
+            let a = this.componentAlpha(i, te, s, ad);
+            if (a !== a) a = 1;
             stepOut[i] = a * s;
             alpha[i] = a;
         }

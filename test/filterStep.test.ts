@@ -132,4 +132,36 @@ describe('filterStep()', () => {
     const result = filter.filter(1016, new Float64Array([1.1, 2.1, 3.1]));
     expect(Array.from(result).every(Number.isFinite)).toBe(true);
   });
+
+  it('treats a NaN te like a non-positive one', () => {
+    const filter = new OneEuroFilter(0.001, 0.5);
+    const twin = new OneEuroFilter(0.001, 0.5);
+    for (const f of [filter, twin]) f.filterStep(16, new Float64Array([0.5, -1]));
+    const result = filter.filterStep(NaN, new Float64Array([1, 1]));
+    expect(Array.from(result.step)).toEqual([0, 0]);
+    expect(Array.from(result.alpha)).toEqual([0, 0]);
+    const next = new Float64Array([0.3, -0.6]);
+    expect(filter.filterStep(16, next)).toEqual(twin.filterStep(16, next));
+  });
+
+  it('follows the step (alpha = 1) when the cutoff times te overflows, like the nft-tracker core', () => {
+    const huge = new OneEuroFilter(1e308, 0).filterStep(16, new Float64Array([0.1, -0.2]));
+    expect(Array.from(huge.alpha)).toEqual([1, 1]);
+    expect(Array.from(huge.step)).toEqual([0.1, -0.2]);
+
+    const filter = new OneEuroFilter(0.001, 0.5);
+    const endless = filter.filterStep(Infinity, new Float64Array([0.1, -0.2]));
+    expect(Array.from(endless.alpha)).toEqual([1, 1]);
+    expect(Array.from(endless.step)).toEqual([0.1, -0.2]);
+    expect(Array.from(filter.filterStep(16, new Float64Array([0.1, -0.2])).step).every(Number.isFinite)).toBe(true);
+  });
+
+  it('rejects destination arrays that are too short or shared', () => {
+    const filter = new OneEuroFilter(0.001, 0.5);
+    const step = new Float64Array([1, 2, 3]);
+    expect(() => filter.filterStep(16, step, new Float64Array(2))).toThrow(RangeError);
+    expect(() => filter.filterStep(16, step, undefined, new Float64Array(2))).toThrow(RangeError);
+    const shared = new Float64Array(3);
+    expect(() => filter.filterStep(16, step, shared, shared)).toThrow(RangeError);
+  });
 });
