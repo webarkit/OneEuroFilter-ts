@@ -1,3 +1,3 @@
-import { OneEuroFilter, FilterDataArray } from './OneEuroFilter';
+import { OneEuroFilter, FilterDataArray, FilterStepResult } from './OneEuroFilter.js';
 export { OneEuroFilter };
-export type { FilterDataArray };
+export type { FilterDataArray, FilterStepResult };
