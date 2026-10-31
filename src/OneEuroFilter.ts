@@ -49,7 +49,10 @@ export type FilterDataArray = Float32Array | Float64Array;
 export interface FilterStepResult<T extends FilterDataArray> {
     /** The smoothed step: `step[i] = alpha[i] * inputStep[i]`. */
     step: T;
-    /** The smoothing factor α of each component, in (0, 1]; 0 when the time delta is not positive. */
+    /**
+     * The smoothing factor α of each component: in [0, 1) for non-negative parameters, 1 where
+     * `2π * cutoff * te` overflows, and 0 when the time delta is not positive or is NaN.
+     */
     alpha: T;
 }
 
@@ -178,8 +181,8 @@ export class OneEuroFilter {
      * The first sample (and the first after `reset()`) is returned as is.
      * A sample whose timestamp is not greater than the previous one returns the previous filtered
      * value and leaves the state unchanged.
-     * @param t - The timestamp of the current sample, in milliseconds, preferably from a monotonic
-     *   clock such as `performance.now()`.
+     * @param t - The timestamp of the current sample, in milliseconds: a finite number, preferably from
+     *   a monotonic clock such as `performance.now()`.
      * @param x - The input signal as a Float32Array or Float64Array. It is not modified.
      * @param out - Optional pre-allocated destination array to write the result into, achieving zero allocation.
      * @returns The filtered signal array.
@@ -253,13 +256,16 @@ export class OneEuroFilter {
      * This is the core of `filter()` without the difference and the update, which the caller does:
      * with `step = x - x̂`, `x̂ + result.step` equals `filter()`'s output up to rounding.
      * Each component has its own α, because its cutoff depends on its own filtered speed.
-     * When `te` is not positive, the step and α are zero and the state is unchanged.
+     * When `te` is not positive or is NaN, the step and α are zero and the state is unchanged.
      * Use either `filter()` or `filterStep()` on one instance: they share the filtered speed.
-     * @param te - The time elapsed since the previous step, in milliseconds.
+     * @param te - The time elapsed since the previous step, in milliseconds. Only the products of `te`
+     *   with the cutoffs and the quotient `step / te` are used, so other units work if `te` and the
+     *   cutoffs agree (for example seconds and Hz).
      * @param step - The raw step of each component since the previous filtered value. It is not modified.
      * @param out - Optional pre-allocated destination for the smoothed step.
      * @param alphaOut - Optional pre-allocated destination for the smoothing factors.
      * @returns The smoothed step (`alpha[i] * step[i]`) and the smoothing factor of each component.
+     * @throws RangeError if `out` or `alphaOut` is shorter than `step`, or if they are the same array.
      */
     filterStep<T extends FilterDataArray>(te: number, step: T, out?: T, alphaOut?: T): FilterStepResult<T> {
         const n = step.length;

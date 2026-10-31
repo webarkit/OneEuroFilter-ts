@@ -27,7 +27,7 @@ The package works with `import` (ESM) and `require` (CommonJS), with types for b
 
 ## Usage
 
-`filter(t, x, out?)` takes a timestamp in **milliseconds** and a `Float32Array` or `Float64Array`, and returns the filtered values in a new array of the same type, or in `out` if you pass one. Use `Float32Array` for most cases, and `Float64Array` when you need more precision.
+Create a filter with `new OneEuroFilter(minCutOff, beta, dCutOff?)` (see [Units](#units) for what the parameters mean). `filter(t, x, out?)` takes a timestamp in **milliseconds** and a `Float32Array` or `Float64Array`, and returns the filtered values in a new array of the same type, or in `out` if you pass one. Use `Float32Array` for most cases, and `Float64Array` when you need more precision.
 
 ```typescript
 import { OneEuroFilter } from "@webarkit/oneeurofilter-ts";
@@ -50,7 +50,7 @@ const filtered = new Float32Array(raw.length);
 filter.filter(performance.now(), raw, filtered);
 ```
 
-Take timestamps from a monotonic clock, for example `performance.now()`, the timestamp of `requestAnimationFrame`, or a video frame's time. The filter never reads a clock itself. A sample whose timestamp is not greater than the previous one returns the previous filtered value and leaves the filter unchanged. `reset()` makes the next sample start the filter again.
+Take timestamps in milliseconds from a monotonic clock, for example `performance.now()` or the timestamp of `requestAnimationFrame`. Convert times given in seconds, such as a video frame's `mediaTime`. Timestamps must be finite numbers. The filter never reads a clock itself. A sample whose timestamp is not greater than the previous one returns the previous filtered value and leaves the filter unchanged. `reset()` makes the next sample start the filter again.
 
 In a browser, with an import map:
 ```html
@@ -82,7 +82,14 @@ Timestamps are in **milliseconds**, so the cutoff frequencies are in **cycles pe
 | `beta` | 1 / (signal unit) | required | same value |
 | `dCutOff` | cycles/ms | `0.001` (= 1 Hz) | Hz ÷ 1000 |
 
-`minCutOff` and `dCutOff` are frequencies, so a value in Hz is divided by 1000: `0.001` is 1 Hz and `0.0001` is 0.1 Hz. `beta` keeps the same value in both conventions. The cutoff is `minCutOff + beta × |speed|`, and the speed is in signal units per millisecond, so converting both sides from seconds to milliseconds divides both by 1000.
+What the parameters do:
+- `minCutOff` is the cutoff when the signal is still. Lower values remove more jitter, at the cost of more lag on slow movements. Keep it above 0: with `minCutOff` and `beta` both 0, the output never moves.
+- `beta` raises the cutoff with the speed, so fast movements lag less. The cutoff is `minCutOff + beta × |speed|`, so `beta` depends on your signal's scale (pixels, metres, radians): tune it for your data.
+- `dCutOff` is the cutoff of the low-pass filter applied to the speed estimate. The default, 1 Hz, rarely needs changing.
+
+The speed is `(x − previous filtered value) / te`, in signal units per millisecond, as in the authors' reference implementation.
+
+`minCutOff` and `dCutOff` are frequencies, so a value in Hz is divided by 1000: `0.001` is 1 Hz and `0.0001` is 0.1 Hz. `beta` keeps the same value in both conventions: converting the cutoff and the speed from seconds to milliseconds divides both sides of `minCutOff + beta × |speed|` by 1000.
 
 The paper suggests starting from `minCutOff` = 1 Hz, `beta` = 0 and `dCutOff` = 1 Hz, so `new OneEuroFilter(0.001, 0, 0.001)` here. Then lower `minCutOff` until slow movements stop jittering, and raise `beta` until fast movements stop lagging.
 
@@ -95,8 +102,10 @@ For each sample, the smoothing factor of a component is `α = r / (r + 1)` with 
 There is one `alpha` per component, because each component's cutoff depends on its own filtered speed, as in `filter()`. For a plain vector, `filterStep` gives the same result as `filter` up to rounding:
 
 ```typescript
+declare const firstSample: Float64Array; // the first input, taken as is
+
 const f = new OneEuroFilter(0.001, 0.5);
-const xHat = Float64Array.from(firstSample); // firstSample: the first input, taken as is
+const xHat = Float64Array.from(firstSample);
 const step = new Float64Array(xHat.length);
 
 function next(x: Float64Array, te: number): Float64Array {
@@ -107,7 +116,14 @@ function next(x: Float64Array, te: number): Float64Array {
 }
 ```
 
-For a rotation, with `ω = log(R̂ᵀ R)` as the step, update `R̂ ← R̂ · exp(smoothed step)`. Pass `out` and `alphaOut` to avoid allocating arrays. When `te` is not positive, `filterStep` returns a zero step and zero `alpha` and leaves the filter unchanged. Use either `filter` or `filterStep` on one instance, not both: they share the filtered speed.
+For a rotation, with `ω = log(R̂ᵀ R)` as the step, update `R̂ ← R̂ · exp(smoothed step)`. Because each component has its own `alpha`, the result depends on the orientation of the frame the rotation vector is expressed in.
+
+More details:
+- Pass `out` and `alphaOut` (different arrays, at least as long as the step) to avoid allocating arrays.
+- When `te` is not positive, or is NaN, `filterStep` returns a zero step and zero `alpha` and leaves the filter unchanged.
+- `filterStep` only uses `te` multiplied by a cutoff and the step divided by `te`, so any units work if `te` and the cutoffs agree, for example seconds and Hz.
+- `reset()` resets the filtered speed; the caller resets its own filtered value.
+- Use one method and one array type per instance: `filter` and `filterStep` share the filtered speed, and the state keeps the array type of the first call.
 
 ## Version
 
