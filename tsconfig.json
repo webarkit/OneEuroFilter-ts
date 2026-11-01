@@ -13,5 +13,6 @@
       "outDir": "dist",                        /* Redirect output structure to the directory. */
       "skipLibCheck": true,                    /* Skip type checking of declaration files. */
     },
-    "include": ["src", "test", "vite.config.ts"]
+    "include": ["src", "test", "vite.config.ts"],
+    "exclude": ["test/fixtures"]
   }
