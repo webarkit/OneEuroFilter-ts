@@ -174,22 +174,63 @@ describe('OneEuroFilter', () => {
     });
   });
 
-  describe('Version Logging', () => {
+  describe('dCutOff', () => {
+    // 3 components, irregular frame times (ms), a speed change half way
+    const run = (filter: OneEuroFilter) => {
+      const outputs: number[][] = [];
+      let t = 0;
+      for (let k = 0; k < 12; k++) {
+        t += 12 + (k % 3) * 7;
+        const v = k < 6 ? 0.01 : 0.2;
+        const x = new Float64Array([v * t, -0.5 * v * t, 3 + Math.sin(t / 50)]);
+        outputs.push(Array.from(filter.filter(t, x)));
+      }
+      return outputs;
+    };
+
+    it('defaults to 0.001 when omitted', () => {
+      expect(run(new OneEuroFilter(0.001, 0.5))).toEqual(run(new OneEuroFilter(0.001, 0.5, 0.001)));
+    });
+
+    it('treats undefined as the default', () => {
+      expect(run(new OneEuroFilter(0.001, 0.5, undefined))).toEqual(run(new OneEuroFilter(0.001, 0.5)));
+    });
+
+    it('changes the output when set to another value', () => {
+      expect(run(new OneEuroFilter(0.001, 0.5, 0.01))).not.toEqual(run(new OneEuroFilter(0.001, 0.5)));
+    });
+
+    it.each([0, -0.001, NaN, Infinity, -Infinity])('rejects %s with a RangeError', (value) => {
+      expect(() => new OneEuroFilter(0.001, 0.5, value)).toThrow(RangeError);
+      expect(() => new OneEuroFilter(0.001, 0.5, value)).toThrow(/dCutOff/);
+    });
+  });
+
+  describe('Version and side effects', () => {
     it('should expose the package version as a static property', () => {
       expect(OneEuroFilter.version).toBe(version);
     });
 
-    it('should log the version only once across multiple instances', async () => {
-      // Load a fresh module so the module-level logging flag starts unset
-      vi.resetModules();
-      const { OneEuroFilter: FreshFilter } = await import('../src/OneEuroFilter');
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    it('should not write to the console on import, construction or filtering', async () => {
+      const methods = ['log', 'info', 'warn', 'error', 'debug'] as const;
+      try {
+        const spies = methods.map((m) => vi.spyOn(console, m).mockImplementation(() => {}));
+        // Load a fresh module so that module-level code runs again under the spies
+        vi.resetModules();
+        const { OneEuroFilter: FreshFilter } = await import('../src/OneEuroFilter');
 
-      new FreshFilter(120, 0.1);
-      new FreshFilter(120, 0.1);
+        const a = new FreshFilter(120, 0.1);
+        const b = new FreshFilter(120, 0.1);
+        a.filter(1000, new Float32Array([1, 2]));
+        a.filter(1016, new Float32Array([2, 3]));
+        b.filter(1000, new Float64Array([1, 2]));
 
-      expect(logSpy).toHaveBeenCalledTimes(1);
-      logSpy.mockRestore();
+        for (const spy of spies) {
+          expect(spy).toHaveBeenCalledTimes(0);
+        }
+      } finally {
+        vi.restoreAllMocks();
+      }
     });
   });
 });

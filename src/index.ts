@@ -2,6 +2,9 @@
  *  index.ts
  *  index
  *
+ *  SPDX-License-Identifier: LGPL-3.0-or-later
+ *  The linking exception stated below also applies (see LICENSE).
+ *
  *  This file is part of OneEuroFilter-ts - WebARKit.
  *
  *  OneEuroFilter-ts is free software: you can redistribute it and/or modify
@@ -15,7 +18,7 @@
  *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  along with OneEuroFilter.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with OneEuroFilter-ts.  If not, see <https://www.gnu.org/licenses/>.
  *
  *  As a special exception, the copyright holders of this library give you
  *  permission to link this library with independent modules to produce an
@@ -35,8 +38,8 @@
  *  Ref: https://jaantollander.com/post/noise-filtering-using-one-euro-filter/#mjx-eqn%3A1
  * 
  */
-import { OneEuroFilter } from "./OneEuroFilter";
-import type { FilterDataArray } from "./OneEuroFilter";
+import { OneEuroFilter } from "./OneEuroFilter.js";
+import type { FilterDataArray, FilterStepResult } from "./OneEuroFilter.js";
 
 export { OneEuroFilter }
-export type { FilterDataArray }
+export type { FilterDataArray, FilterStepResult }

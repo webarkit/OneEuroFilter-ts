@@ -1,0 +1,5 @@
+{
+  "name": "nodenext-consumer",
+  "private": true,
+  "type": "module"
+}
